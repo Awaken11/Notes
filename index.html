@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UNIT–II: Vulnerability Terminology — Editable Mind Map</title>
+<style>
+:root{--bg:#f1f5f9;--panel:#ffffff;--accent:#0f172a;--muted:#64748b;--card-border:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Segoe UI,Roboto,system-ui,Arial;background:var(--bg);color:#0b1220}
+header{background:linear-gradient(90deg,#0f172a,#0b1220);color:white;padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+.header-title{font-weight:700;font-size:16px}
+.header-actions{display:flex;gap:8px}
+.btn{background:#fff;border-radius:8px;padding:8px 10px;font-size:13px;border:none;cursor:pointer}
+.btn.primary{background:#0f172a;color:#fff}
+.container{max-width:1200px;margin:20px auto;padding:0 16px}
+.grid{display:grid;grid-template-columns:1fr 340px;gap:18px}
+.card{background:var(--panel);border:1px solid var(--card-border);border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(2,6,23,0.03)}
+.mindmap-area{height:720px;position:relative;overflow:hidden}
+.center-node{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--accent);color:#fff;padding:12px 26px;border-radius:999px;display:inline-block;z-index:5}
+.node{position:absolute;background:#fff;border:1px solid var(--card-border);padding:12px;border-radius:10px;width:220px;text-align:left;cursor:pointer;transition:transform .12s ease,box-shadow .12s;z-index:4;overflow:hidden}
+.node .title{font-weight:700;margin-bottom:6px;font-size:15px}
+.node .summary{font-size:13px;color:var(--muted);max-height:72px;overflow:hidden}
+.node.expanded{width:520px;max-height:420px;padding:14px;overflow:auto}
+.node.expanded .summary{max-height:none}
+.resize-handle{position:absolute;width:14px;height:14px;right:6px;bottom:6px;background:#0f172a;border-radius:3px;cursor:se-resize;z-index:10}
+.controls{display:flex;gap:8px;align-items:center}
+.legend{font-size:12px;color:var(--muted);margin-top:8px}
+.aside-list{display:flex;flex-direction:column;gap:8px}
+.topic-btn{background:#fff;border:1px solid transparent;padding:8px 10px;border-radius:8px;text-align:left;cursor:pointer}
+.topic-btn:hover{background:#f8fafc;border-color:var(--card-border)}
+.search{width:100%;padding:8px;border-radius:8px;border:1px solid var(--card-border)}
+.footer{font-size:12px;color:var(--muted);text-align:center;padding:10px 0}
+.modal{position:fixed;inset:0;background:rgba(2,6,23,0.5);display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-card{background:#fff;border-radius:12px;width:100%;max-width:900px;max-height:88vh;overflow:auto;padding:18px;border:1px solid var(--card-border)}
+.close{float:right;background:#0f172a;color:#fff;padding:6px 10px;border-radius:8px;border:none}
+.collapsible{background:#fff;padding:10px;border-radius:8px;border:1px solid var(--card-border);cursor:pointer}
+.collapsible + .content{display:none;padding:10px;margin-top:8px;border-left:3px solid #0f172a;background:#fbfdff}
+.rev-card{padding:10px;border-radius:8px;border:1px solid var(--card-border);background:#fff}
+.choice{padding:10px;border-radius:8px;border:1px solid var(--card-border);cursor:pointer}
+.choice.selected{background:#eef2ff;border-color:#c7d2fe}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.mindmap-area{height:1000px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-title">UNIT–II: Vulnerability Terminology — Study App</div>
+  <div class="header-actions">
+    <button class="btn" onclick="navigate('/')">Mind Map</button>
+    <button class="btn" onclick="navigate('/revision')">Revision</button>
+    <button class="btn" onclick="navigate('/quiz')">Quiz</button>
+    <button class="btn" onclick="navigate('/download')">Download</button>
+  </div>
+</header>
+
+<main class="container">
+  <div id="app"></div>
+  <div class="footer">Tip: Toggle <strong>Edit mode</strong> to rearrange nodes. Double-click a node to expand inline detailed notes (exam format).</div>
+</main>
+
+<!-- Global Modal -->
+<div id="globalModal" style="display:none" class="modal" onclick="closeGlobalModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()" id="globalModalCard">
+    <button class="close" onclick="closeGlobalModal()">Close</button>
+    <div id="globalModalContent"></div>
+  </div>
+</div>
+
+<script>
+/* ----------------------------- DATA ----------------------------- */
+/* Each topic: title, summary, details (exam-style) */
+const TOPICS = {
+  va: {
+    title: 'Vulnerability Assessment',
+    summary: 'Systematic process to identify, analyse and prioritise weaknesses.',
+    details:
+'DEFINITION:\nA Vulnerability Assessment (VA) is a systematic process to identify, analyse and prioritise weaknesses in applications, networks, or systems that could be exploited.\n\nIMPORTANCE:\n- Prevent breaches by finding flaws early.\n- Reduce financial loss and downtime.\n- Support compliance (PCI-DSS, ISO 27001).\n\nOBJECTIVES:\n- Identify vulnerabilities and misconfigurations.\n- Assess risk and business impact.\n- Prioritise remediation and patch management.\n\nADVANTAGES:\n- Proactive risk reduction.\n- Scalable with automated tools.\n- Improves security posture.\n\nDISADVANTAGES:\n- May produce false positives.\n- Cannot find zero-days.\n- Requires skilled analysts for verification.\n\nPROCESS OVERVIEW:\nPlan → Discover → Scan → Analyse → Report → Remediate → Re-test.\n\nEXAMPLE:\nE-commerce site: VA finds SQLi in login form; patch prevents data theft.\n\nMEMORY TRICK: FIND weakness BEFORE attacker FINDS you.'
+  },
+
+  lifecycle: {
+    title: 'Life Cycle of Vulnerability Assessment',
+    summary: 'Planning → Discovery → Scanning → Analysis → Reporting → Remediation → Re-testing',
+    details:
+'DEFINITION:\nRepeatable framework to conduct vulnerability assessments and ensure findings are validated and remediated.\n\nDETAILED STAGES:\n1. Planning & Preparation: scope, ROE, tools.\n2. Information Gathering: asset inventory, fingerprinting.\n3. Vulnerability Scanning: unauthenticated & authenticated scans.\n4. Analysis & Verification: manual validation, remove false positives.\n5. Risk Rating (CVSS): assign severity 0–10.\n6. Reporting: executive summary, technical proof, remediation.\n7. Remediation: patches, config changes.\n8. Re-Testing: verify fixes.\n\nBEST PRACTICES:\n- Use credentialed scans.\n- Maintain an asset inventory.\n- Schedule periodic and ad-hoc assessments.'
+  },
+
+  scanners: {
+    title: 'Vulnerability Scanners',
+    summary: 'Automated tools (Network, Web App, DB, Cloud) to detect known weaknesses.',
+    details:
+'AUTOMATED SCANNERS:\nTools that inspect systems to detect known vulnerabilities, missing patches, and configurations by matching against CVE/NVD.\n\nTYPES & EXAMPLES:\n- Network: Nessus, OpenVAS, Nmap (NSE).\n- Web: OWASP ZAP, Burp Suite, Acunetix.\n- DB: SQLMap (testing), IBM Guardium.\n- Cloud: AWS Inspector, Azure Security Center.\n\nADVANTAGES:\n- Fast, repeatable, scalable.\n- Provide baseline for patching.\n\nLIMITATIONS:\n- False positives & negatives.\n- Cannot detect zero-days or complex logic flaws.\n\nOPERATIONAL TIPS:\n- Use multiple scanners and credentialed scans.\n- Update plugins and feeds regularly.'
+  },
+
+  unknown: {
+    title: 'Unknown Vulnerability',
+    summary: 'A flaw not yet discovered or publicly reported (potential 0-day).',
+    details:
+'DEFINITION:\nA vulnerability not yet discovered or disclosed. Exploited unknowns are called 0-days.\n\nCHARACTERISTICS:\n- No patch or signature available.\n- High risk due to lack of defenses.\n\nMITIGATIONS:\n- Defense-in-depth and anomaly detection (EDR).\n- Rapid incident response and patching.\n\nEXAMPLE:\nLog4Shell (Log4j RCE) acted like a 0-day with widespread impact.'
+  },
+
+  false: {
+    title: 'False Positive',
+    summary: 'Scanner reports problem that is not actually present.',
+    details:
+'DEFINITION:\nA false positive is when a tool flags a non-existent issue.\n\nCAUSES:\n- Signature mismatch.\n- Lack of context (no auth).\n- Custom app responses.\n\nIMPACT:\n- Wastes time, creates alert fatigue.\n\nREDUCTION:\n- Use authenticated scans.\n- Tune rules and manually verify critical findings.'
+  },
+
+  cve: {
+    title: 'CVE (Common Vulnerabilities & Exposures)',
+    summary: 'Standardized identifiers for known vulnerabilities (CVE-YEAR-ID).',
+    details:
+'CVE DEFINITION:\nCVE assigns unique identifiers to publicly disclosed vulnerabilities to ensure consistent tracking.\n\nFORMAT & USAGE:\n- Format: CVE-YYYY-NNNN (e.g., CVE-2021-44228).\n- Managed by MITRE; NVD adds CVSS scores and metadata.\n\nOPERATION:\nMap scanner findings to CVEs and follow vendor advisories.'
+  },
+
+  cwe: {
+    title: 'CWE (Common Weakness Enumeration)',
+    summary: 'Catalog of software weaknesses (root causes), e.g., CWE-79 XSS.',
+    details:
+'CWE DEFINITION:\nA taxonomy of software weaknesses and coding errors that lead to vulnerabilities.\n\nEXAMPLES:\n- CWE-79: XSS\n- CWE-89: SQL Injection\n- CWE-22: Path Traversal\n\nUSE:\nGuide secure coding, map SAST results to weaknesses.'
+  },
+
+  cvss: {
+    title: 'CVSS (Common Vulnerability Scoring System)',
+    summary: 'Severity scoring framework (0–10) using Base/Temporal/Environmental metrics.',
+    details:
+'CVSS DEFINITION:\nA scoring standard that assigns 0–10 severity to vulnerabilities.\n\nMETRIC GROUPS:\n- Base: AV, AC, PR, UI, C, I, A.\n- Temporal: exploit maturity.\n- Environmental: org-specific factors.\n\nSEVERITY TIERS:\n- 0: None; 0.1–3.9: Low; 4.0–6.9: Medium; 7.0–8.9: High; 9.0–10.0: Critical.'
+  },
+
+  stride: {
+    title: 'STRIDE',
+    summary: 'Threat model categories: Spoofing, Tampering, Repudiation, Info disclosure, DoS, Elevation.',
+    details:
+'STRIDE DEFINITION:\nA threat-modeling mnemonic to find threats at design time.\n\nCATEGORIES:\nS: Spoofing\nT: Tampering\nR: Repudiation\nI: Information disclosure\nD: Denial of Service\nE: Elevation of Privilege\n\nUSAGE:\nApply STRIDE to data flows and components; derive mitigations.'
+  },
+
+  dread: {
+    title: 'DREAD',
+    summary: 'Risk scoring: Damage, Reproducibility, Exploitability, Affected users, Discoverability.',
+    details:
+'DREAD DEFINITION:\nA human-scored risk model: score each factor 0–10 and average. Useful for quick triage but subjective.\n\nFACTORS:\nDamage, Reproducibility, Exploitability, Affected users, Discoverability.'
+  },
+
+  code: {
+    title: 'Secure Source Code Review',
+    summary: 'Manual + automated code review to find vulnerabilities early in SDLC.',
+    details:
+'DEFINITION:\nExamine source code to detect security weaknesses and business-logic flaws.\n\nAPPROACHES:\n- Automated (SAST): SonarQube, Semgrep\n- Manual review: business logic\n- Hybrid: best coverage\n\nBEST PRACTICES:\n- Parameterized queries\n- Server-side validation\n- Secret management\n\nPROCESS:\nPlan → Map architecture → Automated scans → Manual review → Report → Fix & Re-test.'
+  }
+};
+
+/* default layout positions (percentages) */
+const DEFAULT_POS = {
+  va:[60,14], lifecycle:[82,30], scanners:[72,60], unknown:[52,78], false:[22,62],
+  cve:[12,30], cwe:[32,10], cvss:[50,44], stride:[50,6], dread:[82,90], code:[18,88]
+};
+
+const STORAGE_KEY = 'unit2_layout_v2';
+
+/* ----------------------------- ROUTING ----------------------------- */
+function navigate(path){
+  location.hash = path.startsWith('/') ? '#'+path : '#/'+path;
+}
+window.addEventListener('hashchange', renderRoute);
+window.addEventListener('load', ()=>{ if(!location.hash) location.hash = '#/'; renderRoute(); });
+
+function renderRoute(){
+  const app = document.getElementById('app');
+  const hash = location.hash.slice(1) || '/';
+  const parts = hash.split('/');
+  const route = parts[1] || '';
+  const param = parts[2] || '';
+  if(route === '') return renderHome(app);
+  if(route === 'revision') return renderRevision(app);
+  if(route === 'quiz') return renderQuiz(app);
+  if(route === 'download') return renderDownload(app);
+  if(route === 'topic' && param) return renderTopic(app, param);
+  renderHome(app);
+}
+
+/* ----------------------------- HOME / MINDMAP ----------------------------- */
+function renderHome(container){
+  container.innerHTML = ''
+    + '<div class="grid">'
+    + '<div class="card">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center">'
+    + '<div><strong>Interactive Mind Map</strong><div style="font-size:13px;color:var(--muted)">Double-click node to expand inline exam-style notes.</div></div>'
+    + '<div class="controls">'
+    + '<label style="font-size:13px;color:var(--muted);margin-right:8px">Edit mode</label>'
+    + '<input id="editToggle" type="checkbox" />'
+    + '</div></div>'
+    + '<div style="margin-top:12px;margin-bottom:8px;display:flex;gap:8px;align-items:center">'
+    + '<button class="btn" onclick="increaseFont()">A+</button><button class="btn" onclick="decreaseFont()">A-</button>'
+    + '<button class="btn" onclick="resetLayout()">Reset</button>'
+    + '<button class="btn primary" onclick="saveLayout()">Save Layout</button>'
+    + '<button class="btn" onclick="loadLayout()">Load Layout</button>'
+    + '</div>'
+    + '<div id="mindmapArea" class="mindmap-area"></div>'
+    + '<div class="legend">Tip: Expand nodes to read full notes. Use Save Layout to persist changes.</div>'
+    + '</div>'
+    + '<aside>'
+    + '<div class="card">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><strong>Topics</strong><small style="color:var(--muted)">click to open</small></div>'
+    + '<div style="margin-bottom:8px"><input id="globalSearch" placeholder="Search topics..." class="search" oninput="searchTopics(event)" /></div>'
+    + '<div class="aside-list" id="asideList"></div>'
+    + '</div>'
+    + '<div style="height:14px"></div>'
+    + '<div class="card"><strong>Quick Actions</strong><div style="margin-top:8px;display:flex;gap:8px"><button class="btn" onclick="navigate(\'/revision\')">Revision</button><button class="btn" onclick="navigate(\'/quiz\')">Start Quiz</button></div></div>'
+    + '</aside>'
+    + '</div>';
+  document.getElementById('editToggle').addEventListener('change', (e)=> toggleEditMode(e.target.checked));
+  renderAsideList();
+  renderMindMap();
+}
+
+function renderAsideList(){
+  const list = document.getElementById('asideList');
+  list.innerHTML = '';
+  Object.keys(TOPICS).forEach(id=>{
+    const t = TOPICS[id];
+    const b = document.createElement('button');
+    b.className = 'topic-btn';
+    b.innerHTML = '<div style="font-weight:600">' + t.title + '</div><div style="font-size:12px;color:var(--muted);margin-top:6px">' + t.summary + '</div>';
+    b.onclick = ()=> navigate('/topic/'+id);
+    list.appendChild(b);
+  });
+}
+
+/* Mindmap rendering + interactions */
+let nodeElements = {};
+let isEditMode = false;
+let fontScale = 1;
+
+function renderMindMap(){
+  const area = document.getElementById('mindmapArea');
+  area.innerHTML = '';
+  nodeElements = {};
+
+  const center = document.createElement('div');
+  center.className = 'center-node';
+  center.innerText = 'UNIT–II';
+  area.appendChild(center);
+
+  const saved = loadPositions() || DEFAULT_POS;
+
+  // svg layer for lines
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width','100%'); svg.setAttribute('height','100%');
+  svg.style.position = 'absolute'; svg.style.left = 0; svg.style.top = 0; svg.style.pointerEvents = 'none';
+  area.appendChild(svg);
+
+  Object.keys(saved).forEach(id=>{
+    const pos = saved[id];
+    const x = pos[0], y = pos[1];
+    const topic = TOPICS[id];
+    const node = document.createElement('div');
+    node.className = 'node';
+    node.style.left = x + '%';
+    node.style.top = y + '%';
+    node.dataset.id = id;
+    node.style.fontSize = (14*fontScale) + 'px';
+    node.innerHTML = '<div class="title">' + topic.title + '</div><div class="summary">' + topic.summary + '</div><div class="resize-handle" title="Drag to resize"></div>';
+    area.appendChild(node);
+    nodeElements[id] = node;
+
+    // double-click -> expand inline
+    node.addEventListener('dblclick', (e)=>{
+      e.stopPropagation();
+      toggleExpand(node, id);
+    });
+
+    // click when not in edit mode -> open topic page
+    node.addEventListener('click', (e)=>{
+      if(!isEditMode) navigate('/topic/'+id);
+    });
+
+    // pointer dragging/resizing
+    makePointerDraggable(node);
+    makeResizable(node);
+
+    // line connecting to center
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('stroke','#e2e8f0');
+    line.setAttribute('stroke-width','1');
+    svg.appendChild(line);
+
+    // update line position function
+    function updateLine(){
+      const ar = area.getBoundingClientRect();
+      const cx = ar.width/2;
+      const cy = ar.height/2;
+      const nx = ar.left + ar.width * (parseFloat(node.style.left)/100);
+      const ny = ar.top + ar.height * (parseFloat(node.style.top)/100);
+      // SVG coordinates relative to svg element: convert to svg space (svg covers full area)
+      const svgRect = svg.getBoundingClientRect();
+      const x1 = cx - svgRect.left;
+      const y1 = cy - svgRect.top;
+      const x2 = nx - svgRect.left;
+      const y2 = ny - svgRect.top;
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+    }
+    // observe style changes to update line
+    const obs = new MutationObserver(updateLine);
+    obs.observe(node, { attributes: true, attributeFilter: ['style'] });
+    window.addEventListener('resize', updateLine);
+    // initial update after render
+    setTimeout(updateLine, 10);
+  });
+}
+
+function toggleExpand(node, id){
+  const expanded = node.classList.toggle('expanded');
+  if(expanded){
+    node.querySelector('.summary').innerText = TOPICS[id].details;
+    node.style.width = '520px';
+    node.style.zIndex = 999;
+  } else {
+    node.querySelector('.summary').innerText = TOPICS[id].summary;
+    node.style.width = '220px';
+    node.style.zIndex = 4;
+  }
+}
+
+/* Pointer drag (works for mouse & touch) */
+function makePointerDraggable(el){
+  let pointerId = null, startX = 0, startY = 0, startLeft = 0, startTop = 0;
+  function onPointerDown(e){
+    if(!isEditMode) return;
+    pointerId = e.pointerId;
+    el.setPointerCapture(pointerId);
+    startX = e.clientX; startY = e.clientY;
+    startLeft = parseFloat(el.style.left) || 0;
+    startTop = parseFloat(el.style.top) || 0;
+    el.style.transition = 'none';
+    e.preventDefault();
+  }
+  function onPointerMove(e){
+    if(pointerId === null || e.pointerId !== pointerId) return;
+    const area = document.getElementById('mindmapArea').getBoundingClientRect();
+    const dx = e.clientX - startX; const dy = e.clientY - startY;
+    const newLeft = ((startLeft/100)*area.width + dx)/area.width*100;
+    const newTop = ((startTop/100)*area.height + dy)/area.height*100;
+    el.style.left = Math.min(92, Math.max(2, newLeft)) + '%';
+    el.style.top = Math.min(92, Math.max(2, newTop)) + '%';
+  }
+  function onPointerUp(e){
+    if(pointerId === null || e.pointerId !== pointerId) return;
+    try{ el.releasePointerCapture(pointerId); } catch(err){}
+    pointerId = null;
+    el.style.transition = 'transform .12s';
+  }
+  el.addEventListener('pointerdown', onPointerDown);
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
+}
+
+/* Resizable using handle */
+function makeResizable(el){
+  const handle = el.querySelector('.resize-handle');
+  if(!handle) return;
+  let isRes = false, startX = 0, startY = 0, startW = 0, startH = 0;
+  handle.addEventListener('pointerdown', function(e){
+    if(!isEditMode) return;
+    isRes = true;
+    startX = e.clientX; startY = e.clientY;
+    const r = el.getBoundingClientRect();
+    startW = r.width; startH = r.height;
+    e.preventDefault(); e.stopPropagation();
+  });
+  window.addEventListener('pointermove', function(e){
+    if(!isRes) return;
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    el.style.width = Math.max(160, startW + dx) + 'px';
+    el.style.height = Math.max(80, startH + dy) + 'px';
+  });
+  window.addEventListener('pointerup', function(){ if(isRes) isRes = false; });
+}
+
+/* Toggle edit mode */
+function toggleEditMode(state){
+  isEditMode = !!state;
+  Object.values(nodeElements).forEach(n=>{
+    n.style.cursor = isEditMode ? 'grab' : 'pointer';
+  });
+}
+
+/* Font controls */
+function increaseFont(){ fontScale += 0.1; Object.values(nodeElements).forEach(n=> n.style.fontSize = (14*fontScale)+'px'); }
+function decreaseFont(){ fontScale = Math.max(0.7, fontScale - 0.1); Object.values(nodeElements).forEach(n=> n.style.fontSize = (14*fontScale)+'px'); }
+
+/* Save / Load / Reset layout */
+function saveLayout(){
+  const positions = {};
+  Object.keys(nodeElements).forEach(id=>{
+    const el = nodeElements[id];
+    positions[id] = [
+      parseFloat(el.style.left) || 0,
+      parseFloat(el.style.top) || 0,
+      parseFloat(el.style.width) || parseFloat(getComputedStyle(el).width) || 220,
+      parseFloat(el.style.height) || null
+    ];
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(positions));
+  alert('Layout saved');
+}
+function loadLayout(){
+  const saved = loadPositions();
+  if(!saved){ alert('No saved layout found'); return; }
+  Object.keys(saved).forEach(id=>{
+    const el = nodeElements[id];
+    if(el){
+      el.style.left = saved[id][0] + '%';
+      el.style.top = saved[id][1] + '%';
+      if(saved[id][2]) el.style.width = saved[id][2] + 'px';
+      if(saved[id][3]) el.style.height = saved[id][3] + 'px';
+    }
+  });
+}
+function loadPositions(){
+  try{ const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; }
+}
+function resetLayout(){ localStorage.removeItem(STORAGE_KEY); renderMindMap(); alert('Layout reset to default'); }
+
+/* Search */
+function searchTopics(e){
+  const q = (e.target.value || '').toLowerCase();
+  const list = document.getElementById('asideList');
+  list.innerHTML = '';
+  Object.keys(TOPICS).filter(id=>{
+    const t = TOPICS[id];
+    return t.title.toLowerCase().includes(q) || t.summary.toLowerCase().includes(q) || t.details.toLowerCase().includes(q);
+  }).forEach(id=>{
+    const t = TOPICS[id];
+    const b = document.createElement('button'); b.className = 'topic-btn';
+    b.innerHTML = '<div style="font-weight:600">' + t.title + '</div><div style="font-size:12px;color:var(--muted);margin-top:6px">' + t.summary + '</div>';
+    b.onclick = ()=> navigate('/topic/'+id);
+    list.appendChild(b);
+  });
+}
+
+/* ----------------------------- TOPIC PAGE ----------------------------- */
+function renderTopic(container, id){
+  const topic = TOPICS[id];
+  if(!topic) { container.innerHTML = '<div class="card">Topic not found</div>'; return; }
+  container.innerHTML =
+    '<div class="card">' +
+      '<div class="topic-header">' +
+        '<div>' +
+          '<div class="topic-title">' + topic.title + '</div>' +
+          '<div style="font-size:13px;color:var(--muted);margin-top:6px">Expanded exam-style notes with advantages, disadvantages, importance and examples.</div>' +
+        '</div>' +
+        '<div><button class="btn" onclick="navigate(\'/\')">Back</button></div>' +
+      '</div>' +
+
+      '<div class="section">' +
+        '<div class="collapsible" onclick="toggleCollapse(this)"><strong>Complete Notes (Definition, Importance, Advantages, Disadvantages)</strong></div>' +
+        '<div class="content"><pre style="white-space:pre-wrap">' + topic.details + '</pre></div>' +
+      '</div>' +
+
+      '<div class="section">' +
+        '<div class="collapsible" onclick="toggleCollapse(this)"><strong>Key Points & Examples</strong></div>' +
+        '<div class="content">' + renderKeyPoints(id) + '</div>' +
+      '</div>' +
+
+      '<div class="section">' +
+        '<div class="collapsible" onclick="toggleCollapse(this)"><strong>Memory Tips & Quick Fixes</strong></div>' +
+        '<div class="content">' + renderMemoryTips(id) + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="height:18px"></div>' +
+    '<div class="card"><strong>Related Topics</strong><div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">' + renderRelated(id) + '</div></div>';
+}
+
+function toggleCollapse(el){
+  const c = el.nextElementSibling;
+  c.style.display = (c.style.display === 'block') ? 'none' : 'block';
+}
+
+function renderKeyPoints(id){
+  switch(id){
+    case 'va': return '<ul><li>Objectives: Identify, Evaluate, Remediate.</li><li>Process: Plan → Scan → Analyse → Fix → Retest.</li><li>Example: SQLi in login page.</li></ul>';
+    case 'lifecycle': return '<ol><li>Planning: define scope</li><li>Discovery: gather assets</li><li>Scanning: auth & unauth scans</li><li>Validation: manual triage</li></ol>';
+    case 'scanners': return '<ul><li>Use multiple scanners</li><li>Credentialed scans reduce false positives</li><li>Update plugins regularly</li></ul>';
+    case 'unknown': return '<ul><li>Cannot be detected by signatures</li><li>Use behavior monitoring & EDR</li></ul>';
+    case 'false': return '<ul><li>Common causes: signatures, context missing</li><li>Verify with logs & manual tests</li></ul>';
+    case 'cve': return '<ul><li>Format: CVE-YYYY-ID</li><li>Use NVD for CVSS and mitigation</li></ul>';
+    case 'cwe': return '<ul><li>Focus: root-cause (coding/design)</li><li>Top CWEs: XSS, SQLi, Path Traversal</li></ul>';
+    case 'cvss': return '<ul><li>Base metrics: AV, AC, PR, UI, C, I, A</li><li>Severity tiers guide prioritization</li></ul>';
+    case 'stride': return '<ul><li>Map threats per component</li><li>Use to generate mitigations</li></ul>';
+    case 'dread': return '<ul><li>Subjective but fast prioritisation</li><li>Score 0–10 per factor</li></ul>';
+    case 'code': return '<ul><li>Hybrid approach: SAST + manual</li><li>Report lines, remediation, and re-test</li></ul>';
+    default: return '';
+  }
+}
+
+function renderMemoryTips(id){
+  switch(id){
+    case 'va': return '<p>FIND weakness BEFORE attacker FINDS you.</p>';
+    case 'lifecycle': return '<p>Plan → Scan → Verify → Fix → Repeat</p>';
+    case 'scanners': return '<p>Scan broadly, verify manually, fix quickly</p>';
+    case 'unknown': return '<p>Defense-in-depth + rapid response</p>';
+    case 'false': return '<p>Verify before you fix</p>';
+    case 'cve': return '<p>Use CVE to reference fixes & advisories</p>';
+    case 'cwe': return '<p>CWE = why vulnerabilities happen</p>';
+    case 'cvss': return '<p>CVSS = how bad it is (0–10)</p>';
+    case 'stride': return '<p>Apply STRIDE during design</p>';
+    case 'dread': return '<p>DREAD = quick human-scored risk</p>';
+    case 'code': return '<p>Review → Reveal → Reduce Risk</p>';
+    default: return '';
+  }
+}
+
+function renderRelated(id){
+  const relatedMap = {
+    va:['lifecycle','scanners','cvss'], lifecycle:['va','scanners'],
+    scanners:['va','cve','cvss'], unknown:['va','cvss'], false:['scanners','va'],
+    cve:['scanners','cvss'], cwe:['code','scanners'], cvss:['cve','va'],
+    stride:['dread','code'], dread:['stride','cvss'], code:['cwe','scanners']
+  };
+  const r = relatedMap[id] || [];
+  return r.map(x => '<button class="btn" style="padding:6px 8px;margin:4px" onclick="navigate(\'/topic/' + x + '\')">' + TOPICS[x].title + '</button>').join('');
+}
+
+/* ----------------------------- REVISION / QUIZ / DOWNLOAD ----------------------------- */
+function renderRevision(container){
+  container.innerHTML = '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><strong>Revision Notes — Unit II</strong><div><button class="btn" onclick="navigate(\'/\')">Back</button></div></div><div class="section" style="margin-top:12px"><div class="revision-grid">' +
+    Object.keys(TOPICS).map(id => {
+      return '<div class="rev-card"><strong>' + TOPICS[id].title + '</strong><p style="font-size:13px;color:var(--muted);margin-top:8px">' + TOPICS[id].details.split('\n')[0].slice(0,220) + '...</p><div style="margin-top:8px"><button class="btn" onclick="navigate(\'/topic/' + id + '\')">Open</button></div></div>';
+    }).join('') +
+    '</div></div></div>';
+}
+
+const QUIZ_QS = [
+  {q:'Which model is used for threat categorization (Spoofing, Tampering, ...)?', a:['DREAD','STRIDE','CVSS','CWE'], correct:1},
+  {q:'What does CVSS measure?', a:['Vulnerability names','Severity score','Exploit code','Code weakness'], correct:1},
+  {q:'Which is a false positive?', a:['Real vulnerability','Scanner flagging non-issue','Zero-day','CVE entry'], correct:1},
+  {q:'CWE stands for?', a:['Common Weakness Enumeration','Common Web Exposure','Critical Weakness Entry','Code Weakness Enumeration'], correct:0},
+  {q:'Which is a web app scanner?', a:['Nessus','OWASP ZAP','Nmap','Guardium'], correct:1},
+  {q:'DREAD factor dealing with how many users are impacted?', a:['Damage','Affected Users','Discoverability','Exploitability'], correct:1},
+  {q:'A vulnerability with no public knowledge is called?', a:['Known Vulnerability','Unknown Vulnerability','CVE','False Positive'], correct:1},
+  {q:'What is the format of CVE IDs?', a:['CVE-YYYY-ID','CVE-ID-YEAR','YYYY-CVE-ID','CVE/ID/YEAR'], correct:0},
+  {q:'Which is best for finding logic flaws?', a:['Automated scanner','Manual code review','CVE list','CVSS scoring'], correct:1},
+  {q:'Which practice reduces false positives?', a:['Unauthenticated scan','Authenticated scan','Disable scanning','Ignore alerts'], correct:1}
+];
+
+function renderQuiz(container){
+  let index = 0, score = 0;
+  container.innerHTML = '<div class="card quiz-card"><strong>Unit II — Practice Quiz</strong><div id="quizArea" style="margin-top:12px"></div></div>';
+  showQuestion();
+  function showQuestion(){
+    const qa = QUIZ_QS[index];
+    const qaHtml = '<div style="font-weight:600">Q' + (index+1) + '. ' + qa.q + '</div><div class="choices">' + qa.a.map((c,i)=> '<div class="choice" data-i="'+i+'">'+c+'</div>').join('') + '</div><div style="margin-top:12px;display:flex;gap:8px"><button class="btn primary" id="nextBtn">Submit</button><button class="btn" onclick="navigate(\'/revision\')">Quit</button></div>';
+    document.getElementById('quizArea').innerHTML = qaHtml;
+    document.querySelectorAll('.choice').forEach(el=>el.onclick = function(){ document.querySelectorAll('.choice').forEach(x=>x.classList.remove('selected')); this.classList.add('selected'); });
+    document.getElementById('nextBtn').onclick = function(){
+      const sel = document.querySelector('.choice.selected');
+      if(!sel){ alert('Select an answer'); return; }
+      const choice = Number(sel.dataset.i);
+      if(choice === qa.correct) score++;
+      index++;
+      if(index >= QUIZ_QS.length) showResult(); else showQuestion();
+    };
+  }
+  function showResult(){
+    container.innerHTML = '<div class="card"><strong>Quiz Result</strong><p style="margin-top:10px">Score: ' + score + ' / ' + QUIZ_QS.length + '</p><div style="margin-top:10px"><button class="btn" onclick="navigate(\'/revision\')">Back to Revision</button> <button class="btn primary" onclick="window.location.reload()">Retake</button></div></div>';
+  }
+}
+
+function renderDownload(container){
+  container.innerHTML = '<div class="card"><strong>Download / Export</strong><p style="color:var(--muted);margin-top:8px">You can export the revision notes. Use the Print option to save as PDF.</p><div style="margin-top:10px"><button class="btn primary" onclick="exportPDF()">Export to PDF (Print)</button> <button class="btn" onclick="copyAllNotes()">Copy Notes (Clipboard)</button></div></div>';
+}
+function exportPDF(){ window.print(); }
+function copyAllNotes(){
+  const text = Object.keys(TOPICS).map(k => TOPICS[k].title + '\n' + TOPICS[k].details + '\n\n').join('');
+  navigator.clipboard.writeText(text).then(()=>alert('Notes copied to clipboard'));
+}
+
+/* Global modal helpers */
+function openGlobalModal(html){ document.getElementById('globalModalContent').innerHTML = html; document.getElementById('globalModal').style.display = 'flex'; }
+function closeGlobalModal(e){ document.getElementById('globalModal').style.display = 'none'; }
+
+/* Initialize first route */
+renderRoute();
+</script>
+</body>
+</html>
